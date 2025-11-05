@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, Billboard, Text } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { SatelliteData } from '@/lib/types/visualization';
 
@@ -74,17 +74,17 @@ export function Satellite({ data, scale = 1, onSelect }: SatelliteProps) {
         <meshBasicMaterial color={statusColors[data.status]} />
       </mesh>
 
-      {/* Always-visible name label (billboard) */}
-      <Billboard position={[0.05, 0.05, 0]}>
-        <Text
-          fontSize={0.035 * scale}
-          color="#dbeafe"
-          outlineWidth={0.004}
-          outlineColor="#0b1220"
-        >
+      {/* Always-visible name label (HTML overlay) */}
+      <Html position={[0.05, 0.05, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
+        <span style={{
+          color: '#dbeafe',
+          fontSize: '10px',
+          textShadow: '0 0 2px #0b1220',
+          fontWeight: 600,
+        }}>
           {data.name}
-        </Text>
-      </Billboard>
+        </span>
+      </Html>
 
       {/* Click tooltip with details */}
       {showTooltip && (
