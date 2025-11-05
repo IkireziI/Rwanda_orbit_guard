@@ -1,11 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { VisualizationCanvas } from '@/components/visualization/VisualizationCanvas';
-import { generateMockSatellites, generateMockDebris, generateMockCollisions, updatePositions } from '@/lib/data/mockVisualizationData';
-import type { SatelliteData, DebrisData, CollisionPrediction, ViewMode, VisualizationFilters } from '@/lib/types/visualization';
-import { Card, CardContent } from '@/components/ui/card';
-import { RotateCcw, LayoutGrid } from 'lucide-react';
+import { OrbitViewer } from '@/components/visualization/OrbitViewer';
 
 export default function VisualizationPage() {
   // Initialize mock data
@@ -77,89 +72,8 @@ export default function VisualizationPage() {
   }, [debris]);
 
   return (
-    <div className="h-full w-full p-6">
-      <div className="flex flex-col gap-6 h-full">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Orbital View</h1>
-          <p className="text-muted-foreground">Real-time satellite tracking and orbital debris monitoring</p>
-        </div>
-
-        {/* 3D Canvas only */}
-        <Card className="relative w-full overflow-hidden" style={{ height: 560 }}>
-          {/* Top-right overlay controls */}
-          <div className="absolute top-3 right-3 z-10 flex gap-2">
-            <button
-              onClick={() => setViewMode((m) => (m === 'perspective' ? 'top-down' : m === 'top-down' ? 'orbit' : 'perspective'))}
-              className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
-              title="Cycle view"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => controlsRef?.current?.reset?.()}
-              className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
-              title="Reset camera"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-          <CardContent className="relative p-0 h-full" style={{ height: '100%' }}>
-            <VisualizationCanvas
-              satellites={satellites}
-              debris={debris}
-              collisions={filteredCollisions}
-              filters={filters}
-              viewMode={viewMode}
-              onSelectSatellite={setSelectedSatellite}
-              onSelectDebris={setSelectedDebris}
-              controlsRef={controlsRef}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Legend + instruction */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-3 h-3 rounded-full bg-blue-400" />
-              <span className="text-sm text-muted-foreground">Satellites</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-3 h-3 rounded-full bg-red-400" />
-              <span className="text-sm text-muted-foreground">Debris</span>
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground">Use mouse to rotate, zoom, and pan</div>
-        </div>
-
-        {/* Tracked Objects */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Tracked Objects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {displaySats.map((s) => (
-              <div key={s.id} className="p-5 rounded-lg border border-border bg-surface">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-blue-400" />
-                  <div className="text-lg font-semibold">{s.name}</div>
-                </div>
-                <div className="text-sm text-muted-foreground">Type: satellite</div>
-                <div className="text-sm mt-1">Altitude: {Math.round(s.orbit.semiMajorAxis - 6371)} km</div>
-              </div>
-            ))}
-            {displayDebris.map((d) => (
-              <div key={d.id} className="p-5 rounded-lg border border-border bg-surface">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-red-400" />
-                  <div className="text-lg font-semibold">{d.name}</div>
-                </div>
-                <div className="text-sm text-muted-foreground">Type: debris</div>
-                <div className="text-sm mt-1">Altitude: {Math.round(d.orbit.semiMajorAxis - 6371)} km</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="p-6">
+      <OrbitViewer />
     </div>
   );
 }
