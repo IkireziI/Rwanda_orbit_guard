@@ -86,7 +86,7 @@ export default function VisualizationPage() {
         </div>
 
         {/* 3D Canvas only */}
-        <Card className="relative w-full h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
+        <Card className="relative w-full overflow-hidden" style={{ height: 560 }}>
           {/* Top-right overlay controls */}
           <div className="absolute top-3 right-3 z-10 flex gap-2">
             <button
@@ -104,7 +104,7 @@ export default function VisualizationPage() {
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
-          <CardContent className="p-0 h-full">
+          <CardContent className="p-0 h-full" style={{ height: '100%' }}>
             <VisualizationCanvas
               satellites={satellites}
               debris={debris}
