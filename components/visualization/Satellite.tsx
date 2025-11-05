@@ -43,10 +43,12 @@ export function Satellite({ data, scale = 1, onSelect }: SatelliteProps) {
     onSelect?.(data);
   };
 
+  // Scale km to scene units where Earth radius (6371km) = 1 unit
+  const SCALE = 1 / 6371;
   const position: [number, number, number] = [
-    data.position.x / 10000,
-    data.position.y / 10000,
-    data.position.z / 10000,
+    data.position.x * SCALE,
+    data.position.y * SCALE,
+    data.position.z * SCALE,
   ];
 
   return (

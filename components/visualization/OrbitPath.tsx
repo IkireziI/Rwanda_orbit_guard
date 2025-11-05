@@ -45,8 +45,9 @@ export function OrbitPath({
       
       const z = xOrbit * Math.sin(w) * Math.sin(i) + yOrbit * Math.cos(w) * Math.sin(i);
       
-      // Scale down for visualization
-      orbitPoints.push(new THREE.Vector3(x / 10000, y / 10000, z / 10000));
+      // Scale km to scene units where Earth radius (6371km) = 1 unit
+      const SCALE = 1 / 6371;
+      orbitPoints.push(new THREE.Vector3(x * SCALE, y * SCALE, z * SCALE));
     }
     
     return orbitPoints;
