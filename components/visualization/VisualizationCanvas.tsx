@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import type { MutableRefObject } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { Earth } from './Earth';
@@ -15,7 +16,6 @@ import type {
   VisualizationFilters,
 } from '@/lib/types/visualization';
 import { Loader2 } from 'lucide-react';
-import { useRef } from 'react';
 
 interface VisualizationCanvasProps {
   satellites: SatelliteData[];
@@ -25,7 +25,7 @@ interface VisualizationCanvasProps {
   viewMode: ViewMode;
   onSelectSatellite?: (satellite: SatelliteData) => void;
   onSelectDebris?: (debris: DebrisData) => void;
-  controlsRef?: React.MutableRefObject<any | null>;
+  controlsRef?: MutableRefObject<any | null>;
 }
 
 function Scene({
@@ -48,9 +48,11 @@ function Scene({
     (deb) => filters.showDebris && filters.debrisSize.has(deb.size)
   );
 
+  // Three.js camera instance
+  const { camera } = useThree();
+
   // Apply camera preset on view mode change
   useEffect(() => {
-    const { camera } = useThree();
     const setPos = (p: [number, number, number]) => {
       camera.position.set(p[0], p[1], p[2]);
       camera.lookAt(0, 0, 0);
@@ -59,7 +61,7 @@ function Scene({
     if (viewMode === 'top-down') setPos([0, 4, 0.001]);
     else if (viewMode === 'orbit') setPos([3, 2, 3]);
     else setPos([4, 3, 4]);
-  }, [viewMode, controlsRef]);
+  }, [viewMode, controlsRef, camera]);
 
   return (
     <>
