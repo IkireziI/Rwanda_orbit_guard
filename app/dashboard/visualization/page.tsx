@@ -2,14 +2,10 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { VisualizationCanvas } from '@/components/visualization/VisualizationCanvas';
-import { VisualizationControls } from '@/components/visualization/VisualizationControls';
 import { generateMockSatellites, generateMockDebris, generateMockCollisions, updatePositions } from '@/lib/data/mockVisualizationData';
 import type { SatelliteData, DebrisData, CollisionPrediction, ViewMode, VisualizationFilters } from '@/lib/types/visualization';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, Satellite as SatelliteIcon, Clock, RotateCcw, LayoutGrid } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { RotateCcw, LayoutGrid } from 'lucide-react';
 
 export default function VisualizationPage() {
   // Initialize mock data
@@ -65,17 +61,20 @@ export default function VisualizationPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter collision predictions
+  // Filter collision predictions (kept internally; not displayed)
   const filteredCollisions = useMemo(() => {
     return collisions.filter((collision) => filters.collisionSeverity.has(collision.severity));
   }, [collisions, filters.collisionSeverity]);
 
-  // Calculate filtered counts
-  const filteredSatelliteCount = satellites.filter((sat) => filters.satelliteTypes.has(sat.type)).length;
-  const filteredDebrisCount = debris.filter((deb) => filters.debrisSize.has(deb.size)).length;
-
   // Controls ref for reset
   const controlsRef = useRef<any>(null);
+
+  // Display lists
+  const displaySats = useMemo(() => satellites.slice(0, 3), [satellites]);
+  const displayDebris = useMemo(() => {
+    const names = ['Debris-A', 'Debris-B', 'Debris-C'];
+    return debris.slice(0, 3).map((d, i) => ({ ...d, name: names[i] }));
+  }, [debris]);
 
   return (
     <div className="h-full w-full p-6">
@@ -83,180 +82,82 @@ export default function VisualizationPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold mb-2">Orbital View</h1>
-          <p className="text-muted-foreground">
-            Real-time satellite tracking and orbital debris monitoring with collision prediction
-          </p>
+          <p className="text-muted-foreground">Real-time satellite tracking and orbital debris monitoring</p>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
-          {/* 3D Visualization Canvas */}
-          <div className="lg:col-span-3 space-y-2">
-            <Card className="relative w-full h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
-              {/* Top-right overlay controls */}
-              <div className="absolute top-3 right-3 z-10 flex gap-2">
-                <button
-                  onClick={() => setViewMode((m) => (m === 'perspective' ? 'top-down' : m === 'top-down' ? 'orbit' : 'perspective'))}
-                  className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
-                  title="Cycle view"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => controlsRef?.current?.reset?.()}
-                  className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
-                  title="Reset camera"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
+        {/* 3D Canvas only */}
+        <Card className="relative w-full h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
+          {/* Top-right overlay controls */}
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
+            <button
+              onClick={() => setViewMode((m) => (m === 'perspective' ? 'top-down' : m === 'top-down' ? 'orbit' : 'perspective'))}
+              className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
+              title="Cycle view"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => controlsRef?.current?.reset?.()}
+              className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
+              title="Reset camera"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+          <CardContent className="p-0 h-full">
+            <VisualizationCanvas
+              satellites={satellites}
+              debris={debris}
+              collisions={filteredCollisions}
+              filters={filters}
+              viewMode={viewMode}
+              onSelectSatellite={setSelectedSatellite}
+              onSelectDebris={setSelectedDebris}
+              controlsRef={controlsRef}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Legend + instruction */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-3 h-3 rounded-full bg-blue-400" />
+              <span className="text-sm text-muted-foreground">Satellites</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-3 h-3 rounded-full bg-red-400" />
+              <span className="text-sm text-muted-foreground">Debris</span>
+            </div>
+          </div>
+          <div className="text-sm text-muted-foreground">Use mouse to rotate, zoom, and pan</div>
+        </div>
+
+        {/* Tracked Objects */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Tracked Objects</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {displaySats.map((s) => (
+              <div key={s.id} className="p-5 rounded-lg border border-border bg-surface">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-blue-400" />
+                  <div className="text-lg font-semibold">{s.name}</div>
+                </div>
+                <div className="text-sm text-muted-foreground">Type: satellite</div>
+                <div className="text-sm mt-1">Altitude: {Math.round(s.orbit.semiMajorAxis - 6371)} km</div>
               </div>
-              <CardContent className="p-0 h-full">
-                <VisualizationCanvas
-                  satellites={satellites}
-                  debris={debris}
-                  collisions={filteredCollisions}
-                  filters={filters}
-                  viewMode={viewMode}
-                  onSelectSatellite={setSelectedSatellite}
-                  onSelectDebris={setSelectedDebris}
-                  controlsRef={controlsRef}
-                />
-              </CardContent>
-            </Card>
-            <p className="text-xs text-muted-foreground">
-              What you are seeing: the blue sphere is Earth. Colored circles are satellites by mission type; orange/red
-              squares are debris sized by risk. Faint rings trace orbit paths. Drag to rotate, scroll to zoom, and click
-              any object to view details in the panels below.
-            </p>
+            ))}
+            {displayDebris.map((d) => (
+              <div key={d.id} className="p-5 rounded-lg border border-border bg-surface">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-red-400" />
+                  <div className="text-lg font-semibold">{d.name}</div>
+                </div>
+                <div className="text-sm text-muted-foreground">Type: debris</div>
+                <div className="text-sm mt-1">Altitude: {Math.round(d.orbit.semiMajorAxis - 6371)} km</div>
+              </div>
+            ))}
           </div>
-
-          {/* Controls Panel */}
-          <div className="h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
-            <ScrollArea className="h-full">
-              <VisualizationControls
-                filters={filters}
-                viewMode={viewMode}
-                satelliteCount={filteredSatelliteCount}
-                debrisCount={filteredDebrisCount}
-                collisionCount={filteredCollisions.length}
-                onFiltersChange={setFilters}
-                onViewModeChange={setViewMode}
-              />
-            </ScrollArea>
-          </div>
-        </div>
-
-        {/* Bottom Information Panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Selected Object Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <SatelliteIcon className="w-5 h-5" />
-                Selected Object
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {selectedSatellite ? (
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold mb-1">{selectedSatellite.name}</h4>
-                    <Badge variant="outline" className="capitalize">
-                      {selectedSatellite.type}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Status:</span>
-                      <p className="font-medium capitalize">{selectedSatellite.status}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Country:</span>
-                      <p className="font-medium">{selectedSatellite.country}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Altitude:</span>
-                      <p className="font-medium">{Math.round(selectedSatellite.orbit.semiMajorAxis - 6371)} km</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Inclination:</span>
-                      <p className="font-medium">{selectedSatellite.orbit.inclination.toFixed(2)}°</p>
-                    </div>
-                  </div>
-                </div>
-              ) : selectedDebris ? (
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold mb-1">{selectedDebris.name}</h4>
-                    <Badge variant="outline" className="capitalize">
-                      {selectedDebris.size} debris
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Source:</span>
-                      <p className="font-medium">{selectedDebris.source}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Confidence:</span>
-                      <p className="font-medium">{(selectedDebris.trackingConfidence * 100).toFixed(0)}%</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Altitude:</span>
-                      <p className="font-medium">{Math.round(selectedDebris.orbit.semiMajorAxis - 6371)} km</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">Click on a satellite or debris object to view details</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Collision Alerts */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
-                Collision Alerts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[200px]">
-                <div className="space-y-3">
-                  {filteredCollisions.slice(0, 5).map((collision) => (
-                    <div
-                      key={collision.id}
-                      className="p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-medium text-sm">
-                          {collision.object1Name} ↔ {collision.object2Name}
-                        </div>
-                        <Badge
-                          variant={collision.severity === 'critical' ? 'destructive' : 'outline'}
-                          className="capitalize text-xs"
-                        >
-                          {collision.severity}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {new Date(collision.predictedTime).toLocaleString()}
-                        </div>
-                        <div>Probability: {(collision.probability * 100).toFixed(1)}%</div>
-                        <div>Min Distance: {collision.minimumDistance.toFixed(2)} km</div>
-                      </div>
-                    </div>
-                  ))}
-                  {filteredCollisions.length === 0 && (
-                    <p className="text-muted-foreground text-sm">No collision alerts match current filters</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
