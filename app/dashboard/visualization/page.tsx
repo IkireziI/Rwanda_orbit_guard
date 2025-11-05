@@ -82,8 +82,8 @@ export default function VisualizationPage() {
         {/* Main Content */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
           {/* 3D Visualization Canvas */}
-          <div className="lg:col-span-3 h-[600px] lg:h-full">
-            <Card className="w-full h-full">
+          <div className="lg:col-span-3 space-y-2">
+            <Card className="w-full h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
               <CardContent className="p-0 h-full">
                 <VisualizationCanvas
                   satellites={satellites}
@@ -96,10 +96,15 @@ export default function VisualizationPage() {
                 />
               </CardContent>
             </Card>
+            <p className="text-xs text-muted-foreground">
+              What you are seeing: the blue sphere is Earth. Colored circles are satellites by mission type; orange/red
+              squares are debris sized by risk. Faint rings trace orbit paths. Drag to rotate, scroll to zoom, and click
+              any object to view details in the panels below.
+            </p>
           </div>
 
           {/* Controls Panel */}
-          <div className="h-[600px] lg:h-full overflow-hidden">
+          <div className="h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
             <ScrollArea className="h-full">
               <VisualizationControls
                 filters={filters}
