@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Play, Pause, RotateCcw } from 'lucide-react'
-import type * as THREE from "three"
+import * as THREE from "three"
 
 interface OrbitalObject {
   id: string
