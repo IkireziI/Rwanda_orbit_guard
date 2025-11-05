@@ -104,7 +104,7 @@ export default function VisualizationPage() {
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
-          <CardContent className="p-0 h-full" style={{ height: '100%' }}>
+          <CardContent className="relative p-0 h-full" style={{ height: '100%' }}>
             <VisualizationCanvas
               satellites={satellites}
               debris={debris}
