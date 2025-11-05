@@ -18,8 +18,8 @@ import { Satellite, AlertCircle, TrendingUp, Activity, RefreshCw } from "lucide-
 interface DashboardStats {
   totalSatellites: number
   activeAlerts: number
-  healthStatus: number
-  predictionAccuracy: number
+  healthStatus: number // percentage 0-100
+  predictionAccuracy: number // fraction 0-1
 }
 
 interface ChartData {
@@ -30,13 +30,13 @@ interface ChartData {
 }
 
 const mockChartData: ChartData[] = [
-  { time: "00:00", satellites: 850, debris: 2400, collisions: 0 },
-  { time: "04:00", satellites: 900, debris: 2210, collisions: 1 },
-  { time: "08:00", satellites: 920, debris: 2290, collisions: 2 },
-  { time: "12:00", satellites: 950, debris: 2000, collisions: 1 },
-  { time: "16:00", satellites: 980, debris: 2181, collisions: 3 },
-  { time: "20:00", satellites: 1000, debris: 2500, collisions: 2 },
-  { time: "24:00", satellites: 1050, debris: 2100, collisions: 0 },
+  { time: "00:00", satellites: 980, debris: 2400, collisions: 0 },
+  { time: "04:00", satellites: 990, debris: 2210, collisions: 1 },
+  { time: "08:00", satellites: 995, debris: 2290, collisions: 2 },
+  { time: "12:00", satellites: 1000, debris: 2000, collisions: 1 },
+  { time: "16:00", satellites: 1002, debris: 2181, collisions: 3 },
+  { time: "20:00", satellites: 1004, debris: 2500, collisions: 2 },
+  { time: "24:00", satellites: 1004, debris: 2100, collisions: 0 },
 ]
 
 const mockAlertDistribution = [
@@ -55,39 +55,22 @@ const mockOrbitalHealth = [
 const COLORS = ["#2ed573", "#ffa502", "#ff4757"]
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalSatellites: 1050,
-    activeAlerts: 3,
-    healthStatus: 98,
-    predictionAccuracy: 99.2,
+  const [stats] = useState<DashboardStats>({
+    totalSatellites: 11700,
+    activeAlerts: 2,
+    healthStatus: 90.0,
+    predictionAccuracy: 0.9678, // 96.78%
   })
 
   const [lastUpdated, setLastUpdated] = useState(new Date())
 
+  // Keep timestamp fresh without randomizing the pinned values
   useEffect(() => {
-    // Simulate real-time data updates
-    const interval = setInterval(() => {
-      setStats((prev) => ({
-        ...prev,
-        totalSatellites: Math.floor(Math.random() * 50) + 1000,
-        activeAlerts: Math.floor(Math.random() * 5),
-        healthStatus: Math.max(90, Math.random() * 100),
-        predictionAccuracy: Math.max(98, Math.random() * 100),
-      }))
-      setLastUpdated(new Date())
-    }, 5000)
-
+    const interval = setInterval(() => setLastUpdated(new Date()), 60_000)
     return () => clearInterval(interval)
   }, [])
 
   const handleRefresh = () => {
-    setStats((prev) => ({
-      ...prev,
-      totalSatellites: Math.floor(Math.random() * 50) + 1000,
-      activeAlerts: Math.floor(Math.random() * 5),
-      healthStatus: Math.max(90, Math.random() * 100),
-      predictionAccuracy: Math.max(98, Math.random() * 100),
-    }))
     setLastUpdated(new Date())
   }
 
@@ -159,7 +142,7 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-text-secondary text-sm mb-1">Prediction Accuracy</p>
-              <h3 className="text-3xl font-bold text-primary">{stats.predictionAccuracy.toFixed(1)}%</h3>
+              <h3 className="text-3xl font-bold text-primary">{(stats.predictionAccuracy * 100).toFixed(2)}%</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-primary" />
@@ -171,7 +154,7 @@ export default function DashboardPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-3 gap-6">
-        {/* Satellite Trends */}
+        {/* Satellite & Debris Trends */}
         <div className="col-span-2 p-6 rounded-lg border border-border bg-surface">
           <h3 className="text-lg font-semibold text-text-primary mb-4">Satellite & Debris Trends</h3>
           <ResponsiveContainer width="100%" height={300}>
