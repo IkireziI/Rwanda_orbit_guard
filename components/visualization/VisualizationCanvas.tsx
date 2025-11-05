@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { Earth } from './Earth';
 import { Satellite } from './Satellite';
@@ -15,6 +15,7 @@ import type {
   VisualizationFilters,
 } from '@/lib/types/visualization';
 import { Loader2 } from 'lucide-react';
+import { useRef } from 'react';
 
 interface VisualizationCanvasProps {
   satellites: SatelliteData[];
@@ -24,6 +25,7 @@ interface VisualizationCanvasProps {
   viewMode: ViewMode;
   onSelectSatellite?: (satellite: SatelliteData) => void;
   onSelectDebris?: (debris: DebrisData) => void;
+  controlsRef?: React.MutableRefObject<any | null>;
 }
 
 function Scene({
@@ -34,6 +36,7 @@ function Scene({
   viewMode,
   onSelectSatellite,
   onSelectDebris,
+  controlsRef,
 }: VisualizationCanvasProps) {
   // Filter satellites based on filters
   const filteredSatellites = satellites.filter(
@@ -45,18 +48,18 @@ function Scene({
     (deb) => filters.showDebris && filters.debrisSize.has(deb.size)
   );
 
-  // Camera position based on view mode
-  const getCameraPosition = (): [number, number, number] => {
-    switch (viewMode) {
-      case 'top-down':
-        return [0, 5, 0];
-      case 'orbit':
-        return [3, 2, 3];
-      case 'perspective':
-      default:
-        return [4, 3, 4];
-    }
-  };
+  // Apply camera preset on view mode change
+  useEffect(() => {
+    const { camera } = useThree();
+    const setPos = (p: [number, number, number]) => {
+      camera.position.set(p[0], p[1], p[2]);
+      camera.lookAt(0, 0, 0);
+      (controlsRef as any)?.current?.update?.();
+    };
+    if (viewMode === 'top-down') setPos([0, 4, 0.001]);
+    else if (viewMode === 'orbit') setPos([3, 2, 3]);
+    else setPos([4, 3, 4]);
+  }, [viewMode, controlsRef]);
 
   return (
     <>
@@ -102,6 +105,7 @@ function Scene({
 
       {/* Camera controls */}
       <OrbitControls
+        ref={controlsRef as any}
         enablePan
         enableZoom
         enableRotate

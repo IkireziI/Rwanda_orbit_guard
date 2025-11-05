@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { VisualizationCanvas } from '@/components/visualization/VisualizationCanvas';
 import { VisualizationControls } from '@/components/visualization/VisualizationControls';
 import { generateMockSatellites, generateMockDebris, generateMockCollisions, updatePositions } from '@/lib/data/mockVisualizationData';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, Satellite as SatelliteIcon, Clock } from 'lucide-react';
+import { AlertTriangle, Satellite as SatelliteIcon, Clock, RotateCcw, LayoutGrid } from 'lucide-react';
 
 export default function VisualizationPage() {
   // Initialize mock data
@@ -34,6 +34,12 @@ export default function VisualizationPage() {
   // Initialize data on mount
   useEffect(() => {
     const mockSatellites = generateMockSatellites(50);
+    // Give a few recognizable names for clarity in the scene
+    if (mockSatellites.length >= 3) {
+      mockSatellites[0].name = 'RwaSat-1';
+      mockSatellites[1].name = 'ISS';
+      mockSatellites[2].name = 'Starlink-2847';
+    }
     const mockDebris = generateMockDebris(100);
     const mockCollisions = generateMockCollisions(mockSatellites, mockDebris, 15);
 
@@ -68,12 +74,15 @@ export default function VisualizationPage() {
   const filteredSatelliteCount = satellites.filter((sat) => filters.satelliteTypes.has(sat.type)).length;
   const filteredDebrisCount = debris.filter((deb) => filters.debrisSize.has(deb.size)).length;
 
+  // Controls ref for reset
+  const controlsRef = useRef<any>(null);
+
   return (
     <div className="h-full w-full p-6">
       <div className="flex flex-col gap-6 h-full">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold mb-2">3D Orbit Visualization</h1>
+          <h1 className="text-3xl font-bold mb-2">Orbital View</h1>
           <p className="text-muted-foreground">
             Real-time satellite tracking and orbital debris monitoring with collision prediction
           </p>
@@ -83,7 +92,24 @@ export default function VisualizationPage() {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
           {/* 3D Visualization Canvas */}
           <div className="lg:col-span-3 space-y-2">
-            <Card className="w-full h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
+            <Card className="relative w-full h-[420px] md:h-[560px] lg:h-[640px] overflow-hidden">
+              {/* Top-right overlay controls */}
+              <div className="absolute top-3 right-3 z-10 flex gap-2">
+                <button
+                  onClick={() => setViewMode((m) => (m === 'perspective' ? 'top-down' : m === 'top-down' ? 'orbit' : 'perspective'))}
+                  className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
+                  title="Cycle view"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => controlsRef?.current?.reset?.()}
+                  className="p-2 rounded-md bg-black/40 text-white hover:bg-black/60 border border-white/10"
+                  title="Reset camera"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
               <CardContent className="p-0 h-full">
                 <VisualizationCanvas
                   satellites={satellites}
@@ -93,6 +119,7 @@ export default function VisualizationPage() {
                   viewMode={viewMode}
                   onSelectSatellite={setSelectedSatellite}
                   onSelectDebris={setSelectedDebris}
+                  controlsRef={controlsRef}
                 />
               </CardContent>
             </Card>
