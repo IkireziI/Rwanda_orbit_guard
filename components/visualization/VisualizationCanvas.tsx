@@ -148,6 +148,7 @@ export function VisualizationCanvas(props: VisualizationCanvasProps) {
         fov: 60,
       }}
       className="bg-black"
+      style={{ width: '100%', height: '100%', display: 'block' }}
     >
       <Suspense fallback={null}>
         <Scene {...props} />
