@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, XCircle, HelpCircle } from "lucide-react"
+import { CheckCircle2, XCircle } from 'lucide-react'
 
 interface Question {
   id: string
@@ -16,131 +15,150 @@ interface Question {
 
 interface QuizProps {
   questions: Question[]
-  onComplete?: (score: number) => void
+  answers: Record<string, number>
+  onAnswerChange: (questionId: string, answer: number) => void
+  showResults: boolean
+  onSubmit: () => void
+  correctAnswers?: number
+  totalQuestions?: number
+  quizPercentage?: number
 }
 
-export function Quiz({ questions, onComplete }: QuizProps) {
-  const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
-  const [showResult, setShowResult] = useState(false)
-  const [score, setScore] = useState(0)
-  const [answers, setAnswers] = useState<boolean[]>([])
+export function Quiz({
+  questions,
+  answers,
+  onAnswerChange,
+  showResults,
+  onSubmit,
+  correctAnswers = 0,
+  totalQuestions = 0,
+  quizPercentage = 0,
+}: QuizProps) {
+  const isComplete = Object.keys(answers).length === questions.length
 
-  const handleAnswer = () => {
-    if (selectedAnswer === null) return
-
-    const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer
-    setAnswers([...answers, isCorrect])
-    if (isCorrect) setScore(score + 1)
-    setShowResult(true)
-  }
-
-  const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1)
-      setSelectedAnswer(null)
-      setShowResult(false)
-    } else {
-      onComplete?.(Math.round((score / questions.length) * 100))
-    }
-  }
-
-  const question = questions[currentQuestion]
-  const isCorrect = selectedAnswer === question.correctAnswer
-
-  return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <HelpCircle className="h-5 w-5 text-primary" />
-            Knowledge Check
-          </CardTitle>
-          <Badge variant="outline">
-            Question {currentQuestion + 1} of {questions.length}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">{question.question}</h3>
-          <div className="space-y-2">
-            {question.options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => !showResult && setSelectedAnswer(index)}
-                disabled={showResult}
-                className={`w-full p-4 rounded-lg border text-left transition-colors ${
-                  showResult
-                    ? index === question.correctAnswer
-                      ? "border-chart-5 bg-chart-5/10"
-                      : index === selectedAnswer
-                        ? "border-destructive bg-destructive/10"
-                        : "border-border/50 bg-background/30"
-                    : selectedAnswer === index
-                      ? "border-primary bg-primary/10"
-                      : "border-border/50 bg-background/30 hover:bg-background/50"
-                }`}
+  if (showResults) {
+    return (
+      <div className="space-y-6">
+        {/* Results Summary */}
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm p-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold">Quiz Complete!</h2>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-5xl font-bold text-chart-5">{quizPercentage}%</span>
+              <span className="text-xl text-muted-foreground">({correctAnswers}/{totalQuestions} correct)</span>
+            </div>
+            <div className="pt-4">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
-                      showResult && index === question.correctAnswer
-                        ? "border-chart-5 bg-chart-5"
-                        : showResult && index === selectedAnswer
-                          ? "border-destructive bg-destructive"
-                          : selectedAnswer === index
-                            ? "border-primary bg-primary"
-                            : "border-border"
-                    }`}
-                  >
-                    {showResult && index === question.correctAnswer && <CheckCircle2 className="h-4 w-4 text-white" />}
-                    {showResult && index === selectedAnswer && index !== question.correctAnswer && (
-                      <XCircle className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-                  <span className="text-sm">{option}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {showResult && (
-          <div
-            className={`p-4 rounded-lg border ${
-              isCorrect ? "border-chart-5/30 bg-chart-5/5" : "border-destructive/30 bg-destructive/5"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {isCorrect ? (
-                <CheckCircle2 className="h-5 w-5 text-chart-5 flex-shrink-0 mt-0.5" />
-              ) : (
-                <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-              )}
-              <div className="space-y-1">
-                <p className="font-semibold">{isCorrect ? "Correct!" : "Incorrect"}</p>
-                <p className="text-sm text-muted-foreground">{question.explanation}</p>
-              </div>
+                Retake Quiz
+              </Button>
             </div>
           </div>
-        )}
+        </Card>
 
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Score: {score} / {currentQuestion + (showResult ? 1 : 0)}
-          </div>
-          {showResult ? (
-            <Button onClick={handleNext}>
-              {currentQuestion < questions.length - 1 ? "Next Question" : "Complete Quiz"}
-            </Button>
-          ) : (
-            <Button onClick={handleAnswer} disabled={selectedAnswer === null}>
-              Submit Answer
-            </Button>
-          )}
+        {/* Detailed Results */}
+        <div className="space-y-4">
+          {questions.map((q, idx) => {
+            const userAnswer = answers[q.id]
+            const isCorrect = userAnswer === q.correctAnswer
+
+            return (
+              <Card key={q.id} className="border-border/50 bg-card/50 backdrop-blur-sm p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-semibold text-lg">{idx + 1}. {q.question}</p>
+                    </div>
+                    {isCorrect ? (
+                      <CheckCircle2 className="h-6 w-6 text-chart-5 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-6 w-6 text-destructive flex-shrink-0" />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {q.options.map((option, optIdx) => (
+                      <div
+                        key={optIdx}
+                        className={`p-3 rounded-lg border-2 transition-colors ${
+                          optIdx === q.correctAnswer
+                            ? "border-chart-5 bg-chart-5/10"
+                            : optIdx === userAnswer && !isCorrect
+                              ? "border-destructive bg-destructive/10"
+                              : "border-border/50 bg-background/30"
+                        }`}
+                      >
+                        <p className="font-medium">{option}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-background/50 border border-border/50">
+                    <p className="font-semibold mb-2 text-sm">Explanation</p>
+                    <p className="text-sm text-muted-foreground">{q.explanation}</p>
+                  </div>
+                </div>
+              </Card>
+            )
+          })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {questions.map((q, idx) => (
+        <Card key={q.id} className="border-border/50 bg-card/50 backdrop-blur-sm p-8">
+          <div className="space-y-4">
+            <p className="font-semibold text-lg">
+              {idx + 1}. {q.question}
+            </p>
+
+            <div className="space-y-2">
+              {q.options.map((option, optIdx) => (
+                <button
+                  key={optIdx}
+                  onClick={() => onAnswerChange(q.id, optIdx)}
+                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
+                    answers[q.id] === optIdx
+                      ? "border-primary bg-primary/10"
+                      : "border-border/50 bg-background/30 hover:border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
+                        answers[q.id] === optIdx
+                          ? "border-primary bg-primary"
+                          : "border-border/50"
+                      }`}
+                    >
+                      {answers[q.id] === optIdx && (
+                        <span className="text-white text-xs">✓</span>
+                      )}
+                    </div>
+                    <span className="font-medium">{option}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
+      ))}
+
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm p-6">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {Object.keys(answers).length} of {questions.length} questions answered
+          </p>
+          <Button onClick={onSubmit} disabled={!isComplete}>
+            Submit Quiz
+          </Button>
+        </div>
+      </Card>
+    </div>
   )
 }
