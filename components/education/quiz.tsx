@@ -1,9 +1,10 @@
 "use client"
 
-import { Card } from "@/components/ui/card"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, HelpCircle } from 'lucide-react'
 
 interface Question {
   id: string
@@ -15,150 +16,153 @@ interface Question {
 
 interface QuizProps {
   questions: Question[]
-  answers: Record<string, number>
-  onAnswerChange: (questionId: string, answer: number) => void
-  showResults: boolean
-  onSubmit: () => void
-  correctAnswers?: number
-  totalQuestions?: number
-  quizPercentage?: number
+  onComplete?: (score: number) => void
 }
 
-export function Quiz({
-  questions,
-  answers,
-  onAnswerChange,
-  showResults,
-  onSubmit,
-  correctAnswers = 0,
-  totalQuestions = 0,
-  quizPercentage = 0,
-}: QuizProps) {
-  const isComplete = Object.keys(answers).length === questions.length
+export function Quiz({ questions, onComplete }: QuizProps) {
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [showResult, setShowResult] = useState(false)
+  const [score, setScore] = useState(0)
+  const [quizFinished, setQuizFinished] = useState(false)
 
-  if (showResults) {
+  const handleAnswer = () => {
+    if (selectedAnswer === null) return
+
+    const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer
+    if (isCorrect) setScore(score + 1)
+    setShowResult(true)
+  }
+
+  const handleNext = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1)
+      setSelectedAnswer(null)
+      setShowResult(false)
+    } else {
+      const finalScore = Math.round(
+        ((score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 1 : 0)) / questions.length) * 100,
+      )
+      onComplete?.(finalScore)
+      setQuizFinished(true)
+    }
+  }
+
+  if (quizFinished) {
+    const finalScore = Math.round(
+      ((score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 1 : 0)) / questions.length) * 100,
+    )
     return (
-      <div className="space-y-6">
-        {/* Results Summary */}
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm p-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold">Quiz Complete!</h2>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-5xl font-bold text-chart-5">{quizPercentage}%</span>
-              <span className="text-xl text-muted-foreground">({correctAnswers}/{totalQuestions} correct)</span>
-            </div>
-            <div className="pt-4">
-              <Button
-                onClick={() => window.location.reload()}
-                variant="outline"
-              >
-                Retake Quiz
-              </Button>
-            </div>
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-8 text-center space-y-4">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold">Quiz Completed!</h2>
+            <p className="text-muted-foreground">Great job completing this lesson!</p>
           </div>
-        </Card>
-
-        {/* Detailed Results */}
-        <div className="space-y-4">
-          {questions.map((q, idx) => {
-            const userAnswer = answers[q.id]
-            const isCorrect = userAnswer === q.correctAnswer
-
-            return (
-              <Card key={q.id} className="border-border/50 bg-card/50 backdrop-blur-sm p-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="font-semibold text-lg">{idx + 1}. {q.question}</p>
-                    </div>
-                    {isCorrect ? (
-                      <CheckCircle2 className="h-6 w-6 text-chart-5 flex-shrink-0" />
-                    ) : (
-                      <XCircle className="h-6 w-6 text-destructive flex-shrink-0" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    {q.options.map((option, optIdx) => (
-                      <div
-                        key={optIdx}
-                        className={`p-3 rounded-lg border-2 transition-colors ${
-                          optIdx === q.correctAnswer
-                            ? "border-chart-5 bg-chart-5/10"
-                            : optIdx === userAnswer && !isCorrect
-                              ? "border-destructive bg-destructive/10"
-                              : "border-border/50 bg-background/30"
-                        }`}
-                      >
-                        <p className="font-medium">{option}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-4 rounded-lg bg-background/50 border border-border/50">
-                    <p className="font-semibold mb-2 text-sm">Explanation</p>
-                    <p className="text-sm text-muted-foreground">{q.explanation}</p>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      </div>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-5xl font-bold text-chart-5">{finalScore}%</span>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {questions.map((q, idx) => (
-        <Card key={q.id} className="border-border/50 bg-card/50 backdrop-blur-sm p-8">
-          <div className="space-y-4">
-            <p className="font-semibold text-lg">
-              {idx + 1}. {q.question}
-            </p>
+  const question = questions[currentQuestion]
+  const isCorrect = selectedAnswer === question.correctAnswer
 
-            <div className="space-y-2">
-              {q.options.map((option, optIdx) => (
-                <button
-                  key={optIdx}
-                  onClick={() => onAnswerChange(q.id, optIdx)}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    answers[q.id] === optIdx
+  return (
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-primary" />
+            Knowledge Check
+          </CardTitle>
+          <Badge variant="outline">
+            Question {currentQuestion + 1} of {questions.length}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">{question.question}</h3>
+          <div className="space-y-2">
+            {question.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => !showResult && setSelectedAnswer(index)}
+                disabled={showResult}
+                className={`w-full p-4 rounded-lg border text-left transition-colors ${
+                  showResult
+                    ? index === question.correctAnswer
+                      ? "border-chart-5 bg-chart-5/10"
+                      : index === selectedAnswer
+                        ? "border-destructive bg-destructive/10"
+                        : "border-border/50 bg-background/30"
+                    : selectedAnswer === index
                       ? "border-primary bg-primary/10"
-                      : "border-border/50 bg-background/30 hover:border-border"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
-                        answers[q.id] === optIdx
-                          ? "border-primary bg-primary"
-                          : "border-border/50"
-                      }`}
-                    >
-                      {answers[q.id] === optIdx && (
-                        <span className="text-white text-xs">✓</span>
-                      )}
-                    </div>
-                    <span className="font-medium">{option}</span>
+                      : "border-border/50 bg-background/30 hover:bg-background/50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                      showResult && index === question.correctAnswer
+                        ? "border-chart-5 bg-chart-5"
+                        : showResult && index === selectedAnswer
+                          ? "border-destructive bg-destructive"
+                          : selectedAnswer === index
+                            ? "border-primary bg-primary"
+                            : "border-border"
+                    }`}
+                  >
+                    {showResult && index === question.correctAnswer && <CheckCircle2 className="h-4 w-4 text-white" />}
+                    {showResult && index === selectedAnswer && index !== question.correctAnswer && (
+                      <XCircle className="h-4 w-4 text-white" />
+                    )}
                   </div>
-                </button>
-              ))}
+                  <span className="text-sm">{option}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showResult && (
+          <div
+            className={`p-4 rounded-lg border ${
+              isCorrect ? "border-chart-5/30 bg-chart-5/5" : "border-destructive/30 bg-destructive/5"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {isCorrect ? (
+                <CheckCircle2 className="h-5 w-5 text-chart-5 flex-shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-1">
+                <p className="font-semibold">{isCorrect ? "Correct!" : "Incorrect"}</p>
+                <p className="text-sm text-muted-foreground">{question.explanation}</p>
+              </div>
             </div>
           </div>
-        </Card>
-      ))}
+        )}
 
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm p-6">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(answers).length} of {questions.length} questions answered
-          </p>
-          <Button onClick={onSubmit} disabled={!isComplete}>
-            Submit Quiz
-          </Button>
+          <div className="text-sm text-muted-foreground">
+            Score: {score} / {currentQuestion + (showResult ? 1 : 0)}
+          </div>
+          {showResult ? (
+            <Button onClick={handleNext}>
+              {currentQuestion < questions.length - 1 ? "Next Question" : "Complete Quiz"}
+            </Button>
+          ) : (
+            <Button onClick={handleAnswer} disabled={selectedAnswer === null}>
+              Submit Answer
+            </Button>
+          )}
         </div>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
