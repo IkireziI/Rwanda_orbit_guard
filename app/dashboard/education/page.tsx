@@ -1,69 +1,110 @@
-import { ModuleCard } from "@/components/education/module-card"
-import { Card, CardContent } from "@/components/ui/card"
-import { BookOpen, Award, TrendingUp } from 'lucide-react'
-import { modules } from "@/lib/education-data"
+"use client"
 
-export default function EducationPage() {
-  const completedModules = modules.filter((m) => m.progress === 100).length
-  const inProgressModules = modules.filter((m) => m.progress > 0 && m.progress < 100).length
-  const totalLessons = modules.reduce((acc, m) => acc + m.lessons, 0)
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { LessonContent } from "@/components/education/lesson-content"
+import { Quiz } from "@/components/education/quiz"
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react"
+import { sampleLesson, sampleQuiz, modules } from "@/lib/education-data"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+
+export default function ModulePage() {
+  const params = useParams()
+  const moduleId = params.id as string
+
+  const module = modules.find((m) => m.id === moduleId)
+
+  const [currentLesson, setCurrentLesson] = useState(1)
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [quizCompleted, setQuizCompleted] = useState(false)
+  const totalLessons = module?.lessons || 5
+
+  const handleQuizComplete = (score: number) => {
+    setQuizCompleted(true)
+    alert(`Quiz completed! Your score: ${score}%`)
+  }
+
+  const progress = (currentLesson / totalLessons) * 100
+
+  if (!module) {
+    return (
+      <div className="p-8 space-y-4">
+        <h1 className="text-2xl font-bold">Module not found</h1>
+        <Link href="/dashboard/education">
+          <Button>Back to Modules</Button>
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-balance">Educational Modules</h1>
-        <p className="text-muted-foreground">
-          Learn about satellite operations, orbital mechanics, and space debris management
-        </p>
-      </div>
-
-      {/* Progress Stats */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Completed Modules</p>
-                <p className="text-3xl font-bold text-chart-5">{completedModules}</p>
-              </div>
-              <Award className="h-8 w-8 text-chart-5" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">In Progress</p>
-                <p className="text-3xl font-bold text-secondary">{inProgressModules}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-secondary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Lessons</p>
-                <p className="text-3xl font-bold text-primary">{totalLessons}</p>
-              </div>
-              <BookOpen className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Modules Grid */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Available Courses</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((module) => (
-            <ModuleCard key={module.id} {...module} />
-          ))}
+        <Link href="/dashboard/education">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Modules
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-4xl font-bold text-balance mb-2">{module.title}</h1>
+          <p className="text-muted-foreground">
+            Lesson {currentLesson} of {totalLessons}
+          </p>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Course Progress</span>
+            <span className="font-medium">{Math.round(progress)}%</span>
+          </div>
+          <Progress value={progress} className="h-2" />
         </div>
       </div>
+
+      {/* Content */}
+      {!showQuiz ? (
+        <div className="space-y-6">
+          <LessonContent {...sampleLesson} />
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentLesson(Math.max(1, currentLesson - 1))}
+              disabled={currentLesson === 1}
+              className="bg-transparent"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Previous Lesson
+            </Button>
+            {currentLesson === totalLessons ? (
+              <Button onClick={() => setShowQuiz(true)}>
+                Take Quiz
+                <CheckCircle2 className="h-4 w-4 ml-2" />
+              </Button>
+            ) : (
+              <Button onClick={() => setCurrentLesson(Math.min(totalLessons, currentLesson + 1))}>
+                Next Lesson
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <Quiz questions={sampleQuiz} onComplete={handleQuizComplete} />
+          {quizCompleted && (
+            <div className="flex justify-center">
+              <Link href="/dashboard/education">
+                <Button size="lg">Return to Modules</Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
