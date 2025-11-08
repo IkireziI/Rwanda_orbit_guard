@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress"
 import { LessonContent } from "@/components/education/lesson-content"
 import { Quiz } from "@/components/education/quiz"
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
-import { sampleLesson, sampleQuiz, modules } from "@/lib/education-data"
+import { sampleLesson, sampleQuiz, modules, lessonsByModule, quizzesByModule } from "@/lib/education-data"
 import Link from "next/link"
 import { useParams } from 'next/navigation'
 
@@ -20,6 +20,10 @@ export default function ModulePage() {
   const [showQuiz, setShowQuiz] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
   const totalLessons = module?.lessons || 5
+
+  // Module-specific lesson and quiz (fallback to samples)
+  const lesson = lessonsByModule[moduleId] ?? sampleLesson
+  const quiz = quizzesByModule[moduleId] ?? sampleQuiz
 
   const handleQuizComplete = (score: number) => {
     setQuizCompleted(true)
@@ -66,7 +70,7 @@ export default function ModulePage() {
       {/* Content */}
       {!showQuiz ? (
         <div className="space-y-6">
-          <LessonContent {...sampleLesson} />
+          <LessonContent {...lesson} />
 
           {/* Navigation */}
           <div className="flex items-center justify-between">
@@ -94,7 +98,7 @@ export default function ModulePage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <Quiz questions={sampleQuiz} onComplete={handleQuizComplete} />
+          <Quiz questions={quiz} onComplete={handleQuizComplete} />
           {quizCompleted && (
             <div className="flex justify-center">
               <Link href="/dashboard/education">
