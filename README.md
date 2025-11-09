@@ -1,57 +1,36 @@
-## Rwanda Orbit Guard ##  **Satellite Collision Prediction System**
+## Rwanda Orbit Guard ## 
+
+ **Satellite Collision Prediction System**
  
  
  # Table of Contents #
  
  
- **Features**
+ -[Features](#Features)
 
- **Live Demo**
+ -[Live Demo](#live-demo)
 
- Project Structure
+ -[Project Structure](#project-structure)
 
- Installation & Setup
+ -[Installation & Setup](#installation--setup)
 
-Prerequisites
+ -[How to Use](#how-to-use)
 
-Step 1: Clone the Repository
+ -[Sample Test Data](#sample-test-data)
 
-Step 2: Backend Setup
+ -[Collision Prediction Algorithm](#collision-prediction-algorithm)
 
-Step 3: Frontend Setup
+ -[Deployment](#deployment)
 
-Step 4: Test the Application
+ -[Safety Standards](#safety-standards)
 
- **How to Use**
-
-**Input Parameters**
-
-**Sample Test Data**
-
-**Collision Prediction Algorithm**
-
-**Deployment**
-
-**Backend (Render)**
-
-**Frontend (Vercel)**
-
-**Related Files**
-
-**Backend Files**
-
-**Frontend Files**
-
-**Safety Standards**
-
-
-**License**
+ -[License](#license)
  
-**Acknowledgments**
+-[Acknowledgments](#acknowledgments)
 
-**Support**
+ -[Support](#support)
 
-**Screenshots**
+ -[Screenshots](#screenshots)
 
 
 
@@ -292,5 +271,5 @@ For support, please email me i.ikirezi@alustudent.com
 
 
 
-## Built with love for a safer space environment ## 
+## BUILT WITH LOVE FOR A SAFER SPACE ENVIRONMENT ## 
 
